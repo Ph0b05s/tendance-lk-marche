@@ -3,6 +3,8 @@ import { fetchJobs } from "@/lib/collectors/adzuna";
 import { fetchSectorNews } from "@/lib/collectors/google-news";
 import type { CollectedData, ParsedQuery } from "@/lib/types";
 
+export const maxDuration = 30;
+
 export async function POST(req: NextRequest) {
   try {
     const { query }: { query: ParsedQuery } = await req.json();
