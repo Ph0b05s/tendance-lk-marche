@@ -57,7 +57,7 @@ export async function fetchJobs(
 
   return withRetry(async () => {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 7000);
+    const timer = setTimeout(() => controller.abort(), 4000);
 
     const res = await fetch(`${BASE_URL}/fr/search/1?${params.toString()}`, {
       next: { revalidate: 3600 },
