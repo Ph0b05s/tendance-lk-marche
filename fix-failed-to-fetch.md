@@ -1,12 +1,44 @@
 # Fix : erreurs de build Vercel + "Failed to fetch"
 
+## Problème 0 — Vercel ne détecte pas le projet comme Next.js
+
+**Erreur** : `No Output Directory named "public" found after the Build completed`
+
+Le build Next.js réussit, mais Vercel cherche un dossier `public/` (comportement
+site statique) au lieu de `.next/`. Le preset du projet est mal configuré.
+
+### Option A — Sans toucher au code (recommandée)
+
+Dans le dashboard Vercel :
+Project Settings → General → Framework Preset → choisir **Next.js** → Save → Redeploy.
+
+### Option B — Via le code
+
+Créer un fichier `vercel.json` à la racine du projet :
+
+```json
+{
+  "framework": "nextjs"
+}
+```
+
+Puis commiter :
+
+```bash
+git add vercel.json
+git commit -m "fix: add vercel.json to force Next.js framework preset"
+git push
+```
+
+---
+
 ## Problème 1 — `lib/` absent du repo (cause du build cassé)
 
 Le `.gitignore` contient `/lib`, héritage d'un ancien projet Java.
 Cette ligne exclut tout le dossier `lib/` de Next.js, qui n'est donc jamais
 envoyé sur GitHub. Vercel ne peut pas compiler sans ces fichiers.
 
-### Correction à apporter dans `.gitignore`
+### Correction dans `.gitignore`
 
 Retirer la ligne `/lib`. Remplacer le bloc "java placeholder" par :
 
@@ -84,9 +116,10 @@ return withRetry(async () => {
 
 ## Ordre d'exécution recommandé
 
-1. Corriger `.gitignore` (retirer `/lib`)
-2. Corriger `app/api/collect/route.ts` (ajouter `maxDuration`)
-3. Corriger `lib/collectors/adzuna.ts` (ajouter AbortController)
-4. `git add .gitignore lib/ app/api/collect/route.ts lib/collectors/adzuna.ts`
-5. `git commit -m "fix: lib/ gitignore + collect timeout"`
-6. `git push`
+1. Corriger le Framework Preset dans Vercel (Option A, sans code) **ou** créer `vercel.json` (Option B)
+2. Corriger `.gitignore` (retirer `/lib`)
+3. Corriger `app/api/collect/route.ts` (ajouter `maxDuration`)
+4. Corriger `lib/collectors/adzuna.ts` (ajouter AbortController)
+5. `git add vercel.json .gitignore lib/ app/api/collect/route.ts lib/collectors/adzuna.ts`
+6. `git commit -m "fix: vercel preset + lib/ gitignore + collect timeout"`
+7. `git push`
