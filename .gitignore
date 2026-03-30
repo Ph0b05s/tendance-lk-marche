@@ -37,6 +37,5 @@ next-env.d.ts
 # java placeholder (replaced by this project)
 /src
 /bin
-/lib
 out.txt
 run_output*.txt
