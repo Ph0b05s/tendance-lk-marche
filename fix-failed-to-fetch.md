@@ -1,26 +1,43 @@
-# Fix : erreur "Failed to fetch" sur /api/collect
+# Fix : erreurs de build Vercel + "Failed to fetch"
 
-## Contexte
+## Problème 1 — `lib/` absent du repo (cause du build cassé)
 
-Quand l'utilisateur clique sur "Oui, lancer l'analyse", le navigateur reçoit
-`TypeError: Failed to fetch` car la route `/api/collect` n'a pas de `maxDuration`
-défini. Sur Vercel Hobby (timeout à 10s par défaut), la fonction est tuée avant
-de répondre — la connexion est fermée brutalement, d'où l'erreur côté browser.
+Le `.gitignore` contient `/lib`, héritage d'un ancien projet Java.
+Cette ligne exclut tout le dossier `lib/` de Next.js, qui n'est donc jamais
+envoyé sur GitHub. Vercel ne peut pas compiler sans ces fichiers.
 
-La route `/api/analyze` a déjà `export const maxDuration = 30`, mais `/api/collect`
-est manquante.
+### Correction à apporter dans `.gitignore`
 
-De plus, l'appel Adzuna peut être très lent si les credentials sont invalides
-(`withRetry` tente 3 fois avec backoff exponentiel). Il faut ajouter un timeout
-explicite sur cet appel pour éviter de gaspiller les secondes disponibles.
+Retirer la ligne `/lib`. Remplacer le bloc "java placeholder" par :
+
+```
+# java placeholder (replaced by this project)
+/src
+/bin
+out.txt
+run_output*.txt
+```
+
+Puis commiter et pousser le dossier `lib/` :
+
+```bash
+git add .gitignore lib/
+git commit -m "fix: add lib/ to repo (was excluded by legacy Java gitignore)"
+git push
+```
 
 ---
 
-## Changements à apporter
+## Problème 2 — Timeout sur `/api/collect` (cause du "Failed to fetch")
 
-### 1. `app/api/collect/route.ts`
+La route `/api/collect` n'a pas de `maxDuration` défini.
+Sur Vercel Hobby (timeout à 10s par défaut), la fonction peut être tuée
+avant de répondre si Adzuna ou Google News sont lents — ce qui ferme
+la connexion brutalement et donne `TypeError: Failed to fetch` dans le browser.
 
-Ajouter `export const maxDuration = 30;` en haut du fichier, juste après les imports.
+### Correction dans `app/api/collect/route.ts`
+
+Ajouter `export const maxDuration = 30;` après les imports :
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
@@ -28,16 +45,16 @@ import { fetchJobs } from "@/lib/collectors/adzuna";
 import { fetchSectorNews } from "@/lib/collectors/google-news";
 import type { CollectedData, ParsedQuery } from "@/lib/types";
 
-// Même config que analyze/route.ts — nécessaire sur Vercel Hobby (10s default sinon)
+// Nécessaire sur Vercel Hobby (10s par défaut sinon)
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
   // ... reste inchangé
 ```
 
-### 2. `lib/collectors/adzuna.ts`
+### Correction dans `lib/collectors/adzuna.ts`
 
-Ajouter un `AbortController` avec un timeout de 7 secondes sur le `fetch` Adzuna,
+Ajouter un AbortController avec timeout de 7s sur le fetch Adzuna,
 comme c'est déjà fait dans `google-news.ts`. Remplacer le bloc `return withRetry(...)` :
 
 ```ts
@@ -65,13 +82,11 @@ return withRetry(async () => {
 
 ---
 
-## Vérification après le fix
+## Ordre d'exécution recommandé
 
-1. Lancer `npm run dev`
-2. Taper une requête (ex : "alternance RH Rennes")
-3. Confirmer l'analyse
-4. L'étape "Collecte des offres…" doit passer sans erreur réseau
-
-Si les credentials Adzuna sont invalides, le mode démo s'active automatiquement
-(comportement déjà prévu dans le code) et le rapport est généré avec des données
-fictives — ce n'est pas un bug.
+1. Corriger `.gitignore` (retirer `/lib`)
+2. Corriger `app/api/collect/route.ts` (ajouter `maxDuration`)
+3. Corriger `lib/collectors/adzuna.ts` (ajouter AbortController)
+4. `git add .gitignore lib/ app/api/collect/route.ts lib/collectors/adzuna.ts`
+5. `git commit -m "fix: lib/ gitignore + collect timeout"`
+6. `git push`
