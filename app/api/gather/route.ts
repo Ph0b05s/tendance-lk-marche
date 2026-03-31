@@ -33,16 +33,16 @@ export async function POST(req: NextRequest) {
     if (newsResult.status === "fulfilled") sources.push("Google News");
 
     if (jobsResult.status === "rejected") {
-      console.error("[/api/collect] Adzuna failed:", jobsResult.reason);
+      console.error("[/api/gather] Adzuna failed:", jobsResult.reason);
     }
     if (newsResult.status === "rejected") {
-      console.error("[/api/collect] Google News failed:", newsResult.reason);
+      console.error("[/api/gather] Google News failed:", newsResult.reason);
     }
 
     const data: CollectedData = { jobs, news, totalJobsFound, sources };
     return NextResponse.json(data);
   } catch (err) {
-    console.error("[/api/collect]", err);
+    console.error("[/api/gather]", err);
     return NextResponse.json({ error: "Erreur de collecte" }, { status: 500 });
   }
 }

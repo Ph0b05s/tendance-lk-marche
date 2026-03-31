@@ -120,7 +120,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
     try {
       // Collecte
-      const collectRes = await fetch("/api/collect", {
+      const collectRes = await fetch("/api/gather", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: parsedQuery }),
