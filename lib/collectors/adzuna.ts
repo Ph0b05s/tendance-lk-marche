@@ -74,7 +74,7 @@ export async function fetchJobs(
       jobs: (data.results ?? []).map(mapAdzunaJob),
       total: data.count ?? 0,
     };
-  });
+  }, 1); // maxAttempts=1 : pas de retry sous contrainte Vercel Hobby (10s max)
 }
 
 // ── Mode démo ────────────────────────────────────────────────
