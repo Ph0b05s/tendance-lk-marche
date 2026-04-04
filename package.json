@@ -9,11 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.0",
     "@radix-ui/react-scroll-area": "^1.1.0",
     "@radix-ui/react-separator": "^1.1.0",
     "@radix-ui/react-tooltip": "^1.1.2",
     "clsx": "^2.1.1",
+    "groq-sdk": "^1.1.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.439.0",
